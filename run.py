@@ -12,7 +12,7 @@ RSS_FEEDS = [
     '',
     ''
 ]
-QB_SERVER = ''  # Change if your qBittorrent web UI is hosted elsewhere
+QB_SERVER = ''
 QB_USERNAME = ''
 QB_PASSWORD = ''
 DISCORD_WEBHOOK_URL = ''
