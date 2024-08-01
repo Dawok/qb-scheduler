@@ -60,16 +60,13 @@ def update_last_run(feed_url):
 
 # Log added torrents for removal tracking
 def log_torrent(torrent_hash, added_time):
-    if not os.path.exists(TORRENT_LOG_FILE):
-        print('Torrent log file does not exist, creating a new one.')
-        torrent_log = {}
-    else:
+    torrent_log = {}
+    if os.path.exists(TORRENT_LOG_FILE):
         try:
             with open(TORRENT_LOG_FILE, 'r') as f:
                 torrent_log = json.load(f)
         except (FileNotFoundError, ValueError) as e:
             print(f'Error reading torrent log file: {e}')
-            torrent_log = {}
 
     torrent_log[torrent_hash] = added_time
     try:
@@ -179,14 +176,21 @@ def main():
         latest_file = fetch_latest_file(feed_url)
         if latest_file:
             torrent_url = latest_file.enclosures[0].href
-            torrent_hash = add_torrent(session, torrent_url)
-            if torrent_hash:
-                log_torrent(torrent_hash, datetime.now().isoformat())
-                send_discord_notification(f'Added torrent: {latest_file.title}')
-                update_last_run(feed_url)
-                print(f'Added torrent: {latest_file.title}')
+            try:
+                torrent_hash = add_torrent(session, torrent_url)
+                if torrent_hash:
+                    log_torrent(torrent_hash, datetime.now().isoformat())
+                    send_discord_notification(f'Added torrent: {latest_file.title}')
+                    print(f'Added torrent: {latest_file.title}')
+                else:
+                    print(f'Failed to add torrent: {latest_file.title}')
+            except Exception as e:
+                print(f'Error adding torrent: {e}')
         else:
             print(f'No suitable torrent found in the RSS feed: {feed_url}')
+        
+        # Always update the last run time, even if no torrent was added
+        update_last_run(feed_url)
 
     remove_old_torrents(session)
 
